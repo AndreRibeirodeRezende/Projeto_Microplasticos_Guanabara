@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Simulação 3D - Bubble Barrier</title>
+    <style>
+        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
+        iframe { border: none; width: 100%; height: 100vh; }
+    </style>
+</head>
+<body>
+    <iframe 
+        src="https://kitware.github.io/paraview-glance/app/?name=simulacao_linear.vtkjs&url=https://AndreRibeiroDeRezende.github.io/Projeto_Microplasticos_Guanabara/simulacao_linear.vtkjs">
+    </iframe>
+</body>
+</html>
