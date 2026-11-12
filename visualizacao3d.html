@@ -2,16 +2,69 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simulação 3D - Bubble Barrier</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Visualizador interativo da simulação de fluxo e captura de partículas da barreira de bolhas.">
+    <title>Simulação 3D — Barreira de Bolhas</title>
     <style>
-        body, html { margin: 0; padding: 0; height: 100%; overflow: hidden; }
-        iframe { border: none; width: 100%; height: 100vh; }
+        :root {
+            color-scheme: dark;
+            font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+            background: #101923;
+            color: #eef6fb;
+        }
+        * { box-sizing: border-box; }
+        html, body { width: 100%; min-height: 100%; margin: 0; }
+        body { min-height: 100vh; display: flex; flex-direction: column; }
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            padding: 12px 18px;
+            background: #0b2b40;
+            border-bottom: 1px solid #28546a;
+        }
+        h1 { margin: 0; font-size: 16px; }
+        .note { margin: 3px 0 0; color: #bad0dc; font-size: 12px; }
+        nav { display: flex; flex-wrap: wrap; gap: 8px; }
+        a {
+            display: inline-block;
+            padding: 8px 11px;
+            border: 1px solid #4fc3f7;
+            border-radius: 6px;
+            color: #bceaff;
+            font-size: 12px;
+            text-decoration: none;
+            white-space: nowrap;
+        }
+        a:hover, a:focus-visible { background: #4fc3f7; color: #0b2b40; }
+        main { flex: 1; min-height: 0; display: flex; }
+        iframe { width: 100%; flex: 1; min-height: 60vh; border: 0; background: #242424; }
+        @media (max-width: 650px) {
+            header { align-items: flex-start; flex-direction: column; }
+            main { min-height: 65vh; }
+            iframe { min-height: 65vh; }
+        }
     </style>
 </head>
 <body>
-    <iframe
-        src="https://kitware.github.io/paraview-glance/app/?name=simulacao_linear.vtkjs&amp;url=https://andreribeiroderezende.github.io/Projeto_Microplasticos_Guanabara/simulacao_linear.vtkjs">
-    </iframe>
+    <header>
+        <div>
+            <h1>Simulação 3D — Barreira de Bolhas</h1>
+            <p class="note">Use o mouse para girar e ampliar a visualização. A simulação abre no ParaView Glance.</p>
+        </div>
+        <nav aria-label="Links da simulação">
+            <a href="https://kitware.github.io/paraview-glance/app/?name=simulacao_linear.vtkjs&amp;url=https://raw.githubusercontent.com/AndreRibeirodeRezende/Projeto_Microplasticos_Guanabara/main/simulacao_linear.vtkjs" target="_blank" rel="noopener noreferrer">Abrir visualizador em nova aba</a>
+            <a href="https://raw.githubusercontent.com/AndreRibeirodeRezende/Projeto_Microplasticos_Guanabara/main/simulacao_linear.vtkjs" target="_blank" rel="noopener noreferrer">Abrir/baixar dados VTK.js</a>
+        </nav>
+    </header>
+    <main>
+        <iframe
+            title="Visualização interativa da simulação 3D"
+            src="https://kitware.github.io/paraview-glance/app/?name=simulacao_linear.vtkjs&amp;url=https://raw.githubusercontent.com/AndreRibeirodeRezende/Projeto_Microplasticos_Guanabara/main/simulacao_linear.vtkjs"
+            allow="fullscreen"
+            loading="eager">
+        </iframe>
+    </main>
 </body>
 </html>
