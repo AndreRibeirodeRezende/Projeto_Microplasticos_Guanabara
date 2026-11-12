@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Visualizador independente da nova sequência de imagens da simulação hidrodinâmica.">
+  <title>Nova simulação — Visualizador</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #101923; color: #eef6fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
+    header { padding: 18px 22px 10px; }
+    h1 { margin: 0; font-size: clamp(1.2rem, 3vw, 1.8rem); }
+    header p { margin: 6px 0 0; color: #b7cbd7; }
+    main { flex: 1; display: grid; place-items: center; padding: 16px 22px; }
+    .viewer { width: min(1200px, 100%); }
+    .stage { min-height: 260px; display: grid; place-items: center; overflow: hidden; border: 1px solid #385366; border-radius: 10px; background: #5e5b59; }
+    #frame { display: block; max-width: 100%; max-height: 72vh; object-fit: contain; }
+    #message { padding: 24px; color: #ffcc80; text-align: center; }
+    .controls { display: grid; grid-template-columns: auto auto minmax(100px, 1fr) auto auto; align-items: center; gap: 10px; margin-top: 12px; }
+    button, select { padding: 8px 12px; border: 1px solid #4fc3f7; border-radius: 6px; background: #15384d; color: #eef6fb; font: inherit; }
+    button { cursor: pointer; }
+    button:hover:not(:disabled) { background: #205775; }
+    button:disabled, select:disabled, input:disabled { cursor: not-allowed; opacity: .6; }
+    input[type="range"] { width: 100%; accent-color: #4fc3f7; }
+    #status { grid-column: 1 / -1; color: #c6d6df; font-size: .9rem; }
+    footer { padding: 0 22px 18px; color: #a9bac5; font-size: .85rem; line-height: 1.5; }
+    code { color: #d7efff; }
+    @media (max-width: 650px) { .controls { grid-template-columns: auto auto 1fr; } #status { grid-column: 1 / -1; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Nova simulação hidrodinâmica</h1>
+    <p>Visualizador independente da sequência de quadros PNG; não usa nem altera o visualizador anterior.</p>
+  </header>
+  <main>
+    <section class="viewer" aria-label="Visualizador da nova simulação">
+      <div class="stage">
+        <img id="frame" alt="Quadro da nova simulação" hidden>
+        <div id="message" role="status" aria-live="polite">Procurando os quadros enviados…</div>
+      </div>
+      <div class="controls">
+        <button id="previous" type="button" disabled>◀ Anterior</button>
+        <button id="play" type="button" disabled aria-pressed="false">▶ Reproduzir</button>
+        <input id="seek" type="range" min="0" max="0" value="0" aria-label="Selecionar quadro" disabled>
+        <label for="speed">Velocidade</label>
+        <select id="speed" disabled>
+          <option value="500">2 quadros/s</option>
+          <option value="200">5 quadros/s</option>
+          <option value="100" selected>10 quadros/s</option>
+          <option value="50">20 quadros/s</option>
+        </select>
+        <button id="next" type="button" disabled>Próximo ▶</button>
+        <div id="status" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+  <footer>
+    Para manter esta animação separada da antiga, coloque os arquivos PNG em <code>animacao_nova/</code>,
+    nomeados <code>quadro_0001.png</code>, <code>quadro_0002.png</code> e assim por diante.
+    O visualizador verifica os números de 0001 a 0100 e pula quadros ausentes. As imagens enviadas na conversa
+    não são adicionadas automaticamente ao repositório; é necessário enviar os PNGs para essa pasta para a página exibi-los.
+  </footer>
+
+  <script>
+    (() => {
+      const firstNumber = 1;
+      const lastNumber = 100;
+      const folder = "./animacao_nova/";
+      const image = document.getElementById("frame");
+      const message = document.getElementById("message");
+      const previousButton = document.getElementById("previous");
+      const playButton = document.getElementById("play");
+      const nextButton = document.getElementById("next");
+      const seek = document.getElementById("seek");
+      const speed = document.getElementById("speed");
+      const status = document.getElementById("status");
+      let frames = [];
+      let current = 0;
+      let timer = null;
+
+      function pathFor(number) {
+        return `${folder}quadro_${String(number).padStart(4, "0")}.png`;
+      }
+
+      function checkFrame(number) {
+        return new Promise(resolve => {
+          const probe = new Image();
+          probe.onload = () => resolve({ number, src: probe.src });
+          probe.onerror = () => resolve(null);
+          probe.src = pathFor(number);
+        });
+      }
+
+      function showFrame(index) {
+        if (!frames.length) return;
+        current = (index + frames.length) % frames.length;
+        const selected = frames[current];
+        image.src = selected.src;
+        image.alt = `Quadro ${current + 1} de ${frames.length}`;
+        image.hidden = false;
+        seek.value = String(current);
+        status.textContent = `Quadro ${current + 1} de ${frames.length} — arquivo quadro_${String(selected.number).padStart(4, "0")}.png`;
+      }
+
+      function stop() {
+        if (timer !== null) window.clearInterval(timer);
+        timer = null;
+        playButton.textContent = "▶ Reproduzir";
+        playButton.setAttribute("aria-pressed", "false");
+      }
+
+      function start() {
+        if (timer !== null || frames.length < 2) return;
+        playButton.textContent = "❚❚ Pausar";
+        playButton.setAttribute("aria-pressed", "true");
+        timer = window.setInterval(() => showFrame(current + 1), Number(speed.value));
+      }
+
+      async function initialize() {
+        const checks = Array.from({ length: lastNumber - firstNumber + 1 }, (_, index) => checkFrame(firstNumber + index));
+        frames = (await Promise.all(checks)).filter(Boolean);
+
+        if (!frames.length) {
+          message.textContent = "Nenhuma imagem foi encontrada. Envie os PNGs para animacao_nova/ com nomes como quadro_0001.png e recarregue esta página.";
+          return;
+        }
+
+        message.hidden = true;
+        seek.max = String(frames.length - 1);
+        [previousButton, playButton, nextButton, seek, speed].forEach(control => { control.disabled = false; });
+        showFrame(0);
+      }
+
+      previousButton.addEventListener("click", () => showFrame(current - 1));
+      nextButton.addEventListener("click", () => showFrame(current + 1));
+      playButton.addEventListener("click", () => timer === null ? start() : stop());
+      seek.addEventListener("input", () => showFrame(Number(seek.value)));
+      speed.addEventListener("change", () => {
+        if (timer !== null) { stop(); start(); }
+      });
+      image.addEventListener("error", () => {
+        stop();
+        image.hidden = true;
+        message.hidden = false;
+        message.textContent = "Não foi possível carregar o quadro selecionado. Confira se os PNGs estão publicados em animacao_nova/.";
+      });
+
+      initialize();
+    })();
+  </script>
+</body>
+</html>
