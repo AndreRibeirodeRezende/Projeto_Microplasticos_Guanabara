@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Visualizador da nova sequência de imagens da simulação hidrodinâmica.">
+  <meta name="description" content="Visualizador da sequência PNG da nova simulação hidrodinâmica.">
   <title>Nova simulação hidrodinâmica — Animação</title>
   <style>
     :root { color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #101923; color: #eef6fb; }
@@ -16,7 +16,9 @@
     .viewer { width: min(1200px, 100%); }
     .stage { min-height: 260px; display: grid; place-items: center; overflow: hidden; border: 1px solid #385366; border-radius: 10px; background: #5e5b59; }
     #frame { display: block; max-width: 100%; max-height: 72vh; object-fit: contain; }
+    #frame[hidden] { display: none; }
     #message { padding: 24px; color: #ffcc80; text-align: center; }
+    #message[hidden] { display: none; }
     .controls { display: grid; grid-template-columns: auto auto minmax(100px, 1fr) auto auto; align-items: center; gap: 10px; margin-top: 12px; }
     button, select { padding: 8px 12px; border: 1px solid #4fc3f7; border-radius: 6px; background: #15384d; color: #eef6fb; font: inherit; }
     button { cursor: pointer; }
@@ -32,16 +34,14 @@
 <body>
   <header>
     <h1>Nova simulação hidrodinâmica</h1>
-    <p>Animação independente usando os quadros PNG do repositório.</p>
+    <p>Animação independente usando os quadros PNG publicados no repositório.</p>
   </header>
-
   <main>
     <section class="viewer" aria-label="Visualizador da nova simulação">
       <div class="stage">
         <img id="frame" alt="Quadro da nova simulação" hidden>
         <div id="message" role="status" aria-live="polite">Carregando os quadros PNG…</div>
       </div>
-
       <div class="controls">
         <button id="previous" type="button" disabled>◀ Anterior</button>
         <button id="play" type="button" disabled aria-pressed="false">▶ Reproduzir</button>
@@ -58,17 +58,12 @@
       </div>
     </section>
   </main>
-
-  <footer>
-    Arquivos esperados: <code>imagem.0000.png</code>, <code>imagem.0001.png</code>, etc.
-  </footer>
+  <footer>Quadros <code>imagem.0000.png</code> a <code>imagem.0043.png</code> (quadros ausentes são ignorados). Após a publicação, recarregue sem cache com <strong>Ctrl+F5</strong>.</footer>
 
   <script>
     (() => {
       const firstNumber = 0;
-      const lastNumber = 100;
-      const prefix = "imagem";
-      const folder = "./";
+      const lastNumber = 43;
       const image = document.getElementById("frame");
       const message = document.getElementById("message");
       const previousButton = document.getElementById("previous");
@@ -77,34 +72,40 @@
       const seek = document.getElementById("seek");
       const speed = document.getElementById("speed");
       const status = document.getElementById("status");
-
       let frames = [];
       let current = 0;
       let timer = null;
 
       function pathFor(number) {
-        return `${folder}${prefix}.${String(number).padStart(4, "0")}.png`;
+        return `./imagem.${String(number).padStart(4, "0")}.png`;
       }
 
       function checkFrame(number) {
         return new Promise(resolve => {
           const probe = new Image();
-          probe.onload = () => resolve({ number, src: probe.src });
-          probe.onerror = () => resolve(null);
+          let settled = false;
+          const finish = result => {
+            if (settled) return;
+            settled = true;
+            window.clearTimeout(timeout);
+            resolve(result);
+          };
+          const timeout = window.setTimeout(() => finish(null), 12000);
+          probe.onload = () => finish({ number, src: probe.src });
+          probe.onerror = () => finish(null);
           probe.src = pathFor(number);
         });
       }
 
       function showFrame(index) {
         if (!frames.length) return;
-
         current = (index + frames.length) % frames.length;
         const selected = frames[current];
         image.src = selected.src;
         image.alt = `Quadro ${current + 1} de ${frames.length}`;
         image.hidden = false;
         seek.value = String(current);
-        status.textContent = `Quadro ${current + 1} de ${frames.length} — ${selected.src}`;
+        status.textContent = `Quadro ${current + 1} de ${frames.length} — imagem.${String(selected.number).padStart(4, "0")}.png`;
       }
 
       function stop() {
@@ -122,25 +123,42 @@
       }
 
       async function initialize() {
-        const checks = [];
-        for (let n = firstNumber; n < lastNumber; n++) {
-          checks.push(checkFrame(n));
+        try {
+          const numbers = Array.from({ length: lastNumber - firstNumber + 1 }, (_, index) => firstNumber + index);
+          const results = await Promise.all(numbers.map(checkFrame));
+          frames = results.filter(Boolean);
+
+          if (!frames.length) {
+            message.textContent = "Os PNGs não responderam. Confirme se imagem.0000.png está acessível na raiz do GitHub Pages e tente novamente.";
+            return;
+          }
+
+          message.hidden = true;
+          seek.max = String(frames.length - 1);
+          [previousButton, playButton, nextButton, seek, speed].forEach(control => { control.disabled = false; });
+          showFrame(0);
+        } catch (error) {
+          message.textContent = "Falha ao carregar os quadros. Recarregue a página; se persistir, verifique a publicação do GitHub Pages.";
+          console.error(error);
         }
-
-        const results = await Promise.all(checks);
-        frames = results.filter(Boolean);
-
-        if (!frames.length) {
-          message.textContent = "Nenhuma imagem encontrada. Verifique se os arquivos imagem.0000.png, imagem.0001.png etc. estão na raiz do GitHub Pages.";
-          return;
-        }
-
-        message.hidden = true;
-        seek.max = String(frames.length - 1);
-        [previousButton, playButton, nextButton, seek, speed].forEach(control => control.disabled = false);
-
-        showFrame(0);
       }
 
       previousButton.addEventListener("click", () => showFrame(current - 1));
-      nextButton.addEvent*
+      nextButton.addEventListener("click", () => showFrame(current + 1));
+      playButton.addEventListener("click", () => timer === null ? start() : stop());
+      seek.addEventListener("input", () => showFrame(Number(seek.value)));
+      speed.addEventListener("change", () => {
+        if (timer !== null) { stop(); start(); }
+      });
+      image.addEventListener("error", () => {
+        stop();
+        image.hidden = true;
+        message.hidden = false;
+        message.textContent = "Não foi possível exibir o quadro. Confirme se os PNGs estão publicados.";
+      });
+
+      initialize();
+    })();
+  </script>
+</body>
+</html>
