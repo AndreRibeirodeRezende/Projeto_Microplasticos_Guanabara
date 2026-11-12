@@ -1,28 +1,12 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <title>Simulação Bubble Barrier</title>
-    <style>
-        body { margin: 0; background-color: #0b2b40; display: flex; justify-content: center; align-items: center; height: 100vh; }
-        #animacao { max-width: 100%; max-height: 100%; border: 2px solid #4fc3f7; border-radius: 8px; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="0; url=./animacao.html">
+  <title>Simulação hidrodinâmica — Barreira de Bolhas</title>
 </head>
 <body>
-    <img id="animacao" src="animacao_pngs/simulacao.0000.png" alt="Simulação Bubble Barrier">
-    
-    <script>
-        const img = document.getElementById('animacao');
-        const totalFrames = 43; // Total de arquivos (do 0000 ao 0042)
-        let frame = 0;
-
-        // Função que troca a imagem a cada 100 milissegundos (10 fps)
-        setInterval(() => {
-            frame = (frame + 1) % totalFrames;
-            // Formata o número com 4 dígitos (ex: 0 vira 0000, 1 vira 0001)
-            let frameStr = String(frame).padStart(4, '0');
-            img.src = `animacao_pngs/simulacao.${frameStr}.png`;
-        }, 100); // 100ms = 10 frames por segundo
-    </script>
+  <p>Abrindo o <a href="./animacao.html">visualizador da animação hidrodinâmica</a>…</p>
 </body>
 </html>

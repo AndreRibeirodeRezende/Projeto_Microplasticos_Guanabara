@@ -3,299 +3,147 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Animação da simulação hidrodinâmica da barreira de bolhas.">
-  <title>Simulação hidrodinâmica — Barreira de Bolhas</title>
-
+  <meta name="description" content="Animação quadro a quadro da simulação hidrodinâmica da barreira de bolhas.">
+  <title>Animação hidrodinâmica — Barreira de Bolhas</title>
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      background: #101923;
-      color: #eef6fb;
-      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-    }
-
-    header {
-      padding: 18px 22px 10px;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: clamp(1.2rem, 3vw, 1.8rem);
-    }
-
-    header p {
-      margin: 6px 0 0;
-      color: #b7cbd7;
-    }
-
-    main {
-      flex: 1;
-      display: grid;
-      place-items: center;
-      padding: 16px 22px;
-    }
-
-    .visualizador {
-      width: min(1200px, 100%);
-    }
-
-    .area-imagem {
-      min-height: 250px;
-      display: grid;
-      place-items: center;
-      overflow: hidden;
-      border: 1px solid #385366;
-      border-radius: 10px;
-      background: #5e5b59;
-    }
-
-    #quadro {
-      display: block;
-      max-width: 100%;
-      max-height: 70vh;
-      object-fit: contain;
-    }
-
-    #mensagem {
-      padding: 24px;
-      color: #ffcc80;
-      text-align: center;
-    }
-
-    .controles {
-      display: grid;
-      grid-template-columns: auto minmax(100px, 1fr) auto auto;
-      align-items: center;
-      gap: 12px;
-      margin-top: 12px;
-    }
-
-    button,
-    select {
-      padding: 8px 12px;
-      border: 1px solid #4fc3f7;
-      border-radius: 6px;
-      background: #15384d;
-      color: #eef6fb;
-      font: inherit;
-    }
-
-    button {
-      cursor: pointer;
-    }
-
-    button:hover:not(:disabled) {
-      background: #205775;
-    }
-
-    button:disabled,
-    select:disabled,
-    input:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-
-    input[type="range"] {
-      width: 100%;
-      accent-color: #4fc3f7;
-    }
-
-    #contador {
-      color: #c6d6df;
-      font-size: 0.9rem;
-      text-align: right;
-      white-space: nowrap;
-    }
-
-    footer {
-      padding: 0 22px 18px;
-      color: #a9bac5;
-      font-size: 0.85rem;
-    }
-
-    @media (max-width: 650px) {
-      .controles {
-        grid-template-columns: auto 1fr;
-      }
-
-      #contador {
-        text-align: left;
-      }
-    }
+    :root { color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #101923; color: #eef6fb; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
+    header { padding: 18px 22px 10px; }
+    h1 { margin: 0; font-size: clamp(1.2rem, 3vw, 1.8rem); }
+    header p { margin: 6px 0 0; color: #b7cbd7; }
+    main { flex: 1; display: grid; place-items: center; padding: 16px 22px; }
+    .viewer { width: min(1200px, 100%); }
+    .image-stage { min-height: 250px; display: grid; place-items: center; overflow: hidden; border: 1px solid #385366; border-radius: 10px; background: #5e5b59; }
+    #frame { display: block; max-width: 100%; max-height: 70vh; object-fit: contain; }
+    #message { padding: 24px; color: #ffcc80; text-align: center; }
+    .controls { display: grid; grid-template-columns: auto auto minmax(100px, 1fr) auto auto; align-items: center; gap: 10px; margin-top: 12px; }
+    button, select { padding: 8px 12px; border: 1px solid #4fc3f7; border-radius: 6px; background: #15384d; color: #eef6fb; font: inherit; }
+    button { cursor: pointer; }
+    button:hover:not(:disabled) { background: #205775; }
+    button:disabled, select:disabled, input:disabled { cursor: not-allowed; opacity: .6; }
+    input[type="range"] { width: 100%; accent-color: #4fc3f7; }
+    #status { grid-column: 1 / -1; color: #c6d6df; font-size: .9rem; }
+    footer { padding: 0 22px 18px; color: #a9bac5; font-size: .85rem; }
+    @media (max-width: 650px) { .controls { grid-template-columns: auto auto 1fr; } #status { grid-column: 1 / -1; } }
   </style>
 </head>
-
 <body>
   <header>
     <h1>Simulação hidrodinâmica — Barreira de Bolhas</h1>
-    <p>Use os controles para reproduzir, pausar ou selecionar um quadro da sequência.</p>
+    <p>Animação das imagens PNG exportadas do ParaView. Esta página reproduz imagens 2D; não é um visualizador 3D do Glance.</p>
   </header>
-
   <main>
-    <section class="visualizador" aria-label="Animação da simulação hidrodinâmica">
-      <div class="area-imagem">
-        <img id="quadro" alt="Quadro da simulação hidrodinâmica" hidden>
-        <div id="mensagem" role="status" aria-live="polite">
-          Procurando as imagens da sequência…
-        </div>
+    <section class="viewer" aria-label="Animação da simulação">
+      <div class="image-stage">
+        <img id="frame" alt="Quadro da simulação hidrodinâmica" hidden>
+        <div id="message" role="status" aria-live="polite">Verificando os quadros PNG…</div>
       </div>
-
-      <div class="controles">
-        <button id="botaoReproduzir" type="button" disabled>
-          ▶ Reproduzir
-        </button>
-
-        <input
-          id="controleQuadro"
-          type="range"
-          min="0"
-          max="0"
-          value="0"
-          aria-label="Selecionar quadro da animação"
-          disabled
-        >
-
-        <label for="velocidade">Velocidade</label>
-
-        <select id="velocidade" aria-label="Velocidade da animação" disabled>
+      <div class="controls">
+        <button id="previous" type="button" disabled aria-label="Quadro anterior">◀ Anterior</button>
+        <button id="play" type="button" disabled aria-pressed="false">▶ Reproduzir</button>
+        <input id="seek" type="range" min="0" max="0" value="0" aria-label="Selecionar quadro" disabled>
+        <label for="speed">Velocidade</label>
+        <select id="speed" disabled>
+          <option value="500">2 quadros/s</option>
           <option value="200">5 quadros/s</option>
           <option value="100" selected>10 quadros/s</option>
           <option value="50">20 quadros/s</option>
         </select>
-
-        <span id="contador" aria-live="polite"></span>
+        <button id="next" type="button" disabled aria-label="Próximo quadro">Próximo ▶</button>
+        <div id="status" aria-live="polite"></div>
       </div>
     </section>
   </main>
-
-  <footer>
-    Os arquivos PNG precisam estar na raiz do repositório e seguir o padrão
-    <code>simulacao.0000.png</code>, <code>simulacao.0001.png</code> e assim por diante,
-    sem números faltando na sequência.
-  </footer>
+  <footer>Os quadros são procurados na raiz do repositório, pelo padrão <code>simulacao.0000.png</code>. Arquivos ausentes são ignorados; não é necessário renomear os demais.</footer>
 
   <script>
     (() => {
-      const imagem = document.getElementById("quadro");
-      const mensagem = document.getElementById("mensagem");
-      const botao = document.getElementById("botaoReproduzir");
-      const controle = document.getElementById("controleQuadro");
-      const velocidade = document.getElementById("velocidade");
-      const contador = document.getElementById("contador");
+      // A sequência existente vai de simulacao.0000.png a simulacao.0043.png.
+      // Testar individualmente também permite pular o quadro 0025, que não está no repositório.
+      const firstNumber = 0;
+      const lastNumber = 43;
+      const frames = document.getElementById('frame');
+      const message = document.getElementById('message');
+      const playButton = document.getElementById('play');
+      const previousButton = document.getElementById('previous');
+      const nextButton = document.getElementById('next');
+      const seek = document.getElementById('seek');
+      const speed = document.getElementById('speed');
+      const status = document.getElementById('status');
+      let availableFrames = [];
+      let current = 0;
+      let timer = null;
 
-      const quadros = [];
-      let quadroAtual = 0;
-      let temporizador = null;
-      let buscaTerminada = false;
-
-      // Os PNGs são procurados na raiz, ao lado deste arquivo HTML.
-      function caminhoDoQuadro(numero) {
-        const numeroFormatado = String(numero).padStart(4, "0");
-        return `./simulacao.${numeroFormatado}.png`;
+      function framePath(number) {
+        return `./simulacao.${String(number).padStart(4, '0')}.png`;
       }
 
-      function exibirQuadro(numero) {
-        if (quadros.length === 0) return;
-
-        quadroAtual = numero;
-        imagem.src = quadros[quadroAtual];
-        controle.value = String(quadroAtual);
-        contador.textContent = `Quadro ${quadroAtual + 1} / ${quadros.length}`;
+      function probeFrame(number) {
+        return new Promise(resolve => {
+          const image = new Image();
+          image.onload = () => resolve({ number, src: image.src });
+          image.onerror = () => resolve(null);
+          image.src = framePath(number);
+        });
       }
 
-      function pararAnimacao() {
-        if (temporizador !== null) {
-          window.clearInterval(temporizador);
-          temporizador = null;
-        }
-
-        botao.textContent = "▶ Reproduzir";
-        botao.setAttribute("aria-pressed", "false");
+      function showFrame(index) {
+        if (!availableFrames.length) return;
+        current = (index + availableFrames.length) % availableFrames.length;
+        const item = availableFrames[current];
+        frames.src = item.src;
+        frames.alt = `Quadro ${current + 1} de ${availableFrames.length}; arquivo simulacao.${String(item.number).padStart(4, '0')}.png`;
+        frames.hidden = false;
+        seek.value = String(current);
+        status.textContent = `Quadro ${current + 1} de ${availableFrames.length} — arquivo simulacao.${String(item.number).padStart(4, '0')}.png`;
       }
 
-      function iniciarAnimacao() {
-        if (quadros.length === 0) return;
-
-        mensagem.hidden = true;
-        imagem.hidden = false;
-        controle.max = String(quadros.length - 1);
-
-        botao.disabled = false;
-        controle.disabled = false;
-        velocidade.disabled = false;
-
-        exibirQuadro(0);
+      function stop() {
+        if (timer !== null) window.clearInterval(timer);
+        timer = null;
+        playButton.textContent = '▶ Reproduzir';
+        playButton.setAttribute('aria-pressed', 'false');
       }
 
-      // Testa os arquivos em ordem e encerra no primeiro número ausente.
-      function procurarProximoQuadro(numero) {
-        if (buscaTerminada) return;
-
-        const teste = new Image();
-        teste.onload = () => {
-          quadros.push(caminhoDoQuadro(numero));
-          procurarProximoQuadro(numero + 1);
-        };
-
-        teste.onerror = () => {
-          buscaTerminada = true;
-
-          if (quadros.length === 0) {
-            mensagem.textContent =
-              "Não encontrei simulacao.0000.png na raiz do repositório. " +
-              "Confira o nome do arquivo e se ele foi enviado ao GitHub.";
-            return;
-          }
-
-          iniciarAnimacao();
-        };
-
-        teste.src = caminhoDoQuadro(numero);
+      function start() {
+        if (timer !== null || availableFrames.length < 2) return;
+        playButton.textContent = '❚❚ Pausar';
+        playButton.setAttribute('aria-pressed', 'true');
+        timer = window.setInterval(() => showFrame(current + 1), Number(speed.value));
       }
 
-      botao.addEventListener("click", () => {
-        if (temporizador !== null) {
-          pararAnimacao();
+      async function initialize() {
+        const numbers = Array.from({ length: lastNumber - firstNumber + 1 }, (_, i) => firstNumber + i);
+        const results = await Promise.all(numbers.map(probeFrame));
+        availableFrames = results.filter(Boolean);
+
+        if (!availableFrames.length) {
+          message.textContent = 'Nenhum PNG foi encontrado. Confirme se simulacao.0000.png está na raiz do repositório e se o GitHub Pages publicou os arquivos.';
           return;
         }
 
-        botao.textContent = "❚❚ Pausar";
-        botao.setAttribute("aria-pressed", "true");
+        message.hidden = true;
+        seek.max = String(availableFrames.length - 1);
+        [playButton, previousButton, nextButton, seek, speed].forEach(control => { control.disabled = false; });
+        showFrame(0);
+      }
 
-        temporizador = window.setInterval(() => {
-          const proximo = (quadroAtual + 1) % quadros.length;
-          exibirQuadro(proximo);
-        }, Number(velocidade.value));
+      playButton.addEventListener('click', () => timer === null ? start() : stop());
+      previousButton.addEventListener('click', () => showFrame(current - 1));
+      nextButton.addEventListener('click', () => showFrame(current + 1));
+      seek.addEventListener('input', () => showFrame(Number(seek.value)));
+      speed.addEventListener('change', () => {
+        if (timer !== null) { stop(); start(); }
+      });
+      frames.addEventListener('error', () => {
+        stop();
+        frames.hidden = true;
+        message.hidden = false;
+        message.textContent = 'O quadro não pôde ser exibido. Verifique a publicação dos PNGs no GitHub Pages.';
       });
 
-      controle.addEventListener("input", () => {
-        exibirQuadro(Number(controle.value));
-      });
-
-      velocidade.addEventListener("change", () => {
-        if (temporizador !== null) {
-          pararAnimacao();
-          botao.click();
-        }
-      });
-
-      imagem.addEventListener("error", () => {
-        pararAnimacao();
-        imagem.hidden = true;
-        mensagem.hidden = false;
-        mensagem.textContent =
-          "Não foi possível exibir este quadro. Confira se os PNGs estão na raiz " +
-          "e se os nomes seguem a sequência simulacao.0000.png, simulacao.0001.png…";
-      });
-
-      procurarProximoQuadro(0);
+      initialize();
     })();
   </script>
 </body>
