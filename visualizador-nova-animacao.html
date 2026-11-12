@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Visualizador da sequência PNG da nova simulação hidrodinâmica.">
+  <meta name="description" content="Visualizador da nova sequência de imagens da simulação hidrodinâmica.">
   <title>Nova simulação hidrodinâmica — Animação</title>
   <style>
     :root { color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #101923; color: #eef6fb; }
@@ -32,14 +32,16 @@
 <body>
   <header>
     <h1>Nova simulação hidrodinâmica</h1>
-    <p>Animação independente dos quadros PNG enviados ao repositório.</p>
+    <p>Animação independente usando os quadros PNG do repositório.</p>
   </header>
+
   <main>
     <section class="viewer" aria-label="Visualizador da nova simulação">
       <div class="stage">
         <img id="frame" alt="Quadro da nova simulação" hidden>
         <div id="message" role="status" aria-live="polite">Carregando os quadros PNG…</div>
       </div>
+
       <div class="controls">
         <button id="previous" type="button" disabled>◀ Anterior</button>
         <button id="play" type="button" disabled aria-pressed="false">▶ Reproduzir</button>
@@ -56,12 +58,17 @@
       </div>
     </section>
   </main>
-  <footer>Os quadros usam o padrão <code>imagem.0000.png</code>, <code>imagem.0001.png</code> etc. Arquivos ausentes são ignorados. Se a atualização não aparecer imediatamente, aguarde a publicação do GitHub Pages e recarregue sem cache com <strong>Ctrl+F5</strong>.</footer>
+
+  <footer>
+    Arquivos esperados: <code>imagem.0000.png</code>, <code>imagem.0001.png</code>, etc.
+  </footer>
 
   <script>
     (() => {
       const firstNumber = 0;
       const lastNumber = 100;
+      const prefix = "imagem";
+      const folder = "./";
       const image = document.getElementById("frame");
       const message = document.getElementById("message");
       const previousButton = document.getElementById("previous");
@@ -70,12 +77,13 @@
       const seek = document.getElementById("seek");
       const speed = document.getElementById("speed");
       const status = document.getElementById("status");
+
       let frames = [];
       let current = 0;
       let timer = null;
 
       function pathFor(number) {
-        return `./imagem.${String(number).padStart(4, "0")}.png`;
+        return `${folder}${prefix}.${String(number).padStart(4, "0")}.png`;
       }
 
       function checkFrame(number) {
@@ -89,13 +97,14 @@
 
       function showFrame(index) {
         if (!frames.length) return;
+
         current = (index + frames.length) % frames.length;
         const selected = frames[current];
         image.src = selected.src;
         image.alt = `Quadro ${current + 1} de ${frames.length}`;
         image.hidden = false;
         seek.value = String(current);
-        status.textContent = `Quadro ${current + 1} de ${frames.length} — imagem.${String(selected.number).padStart(4, "0")}.png`;
+        status.textContent = `Quadro ${current + 1} de ${frames.length} — ${selected.src}`;
       }
 
       function stop() {
@@ -113,41 +122,25 @@
       }
 
       async function initialize() {
-        try {
-          const checks = Array.from({ length: lastNumber - firstNumber + 1 }, (_, index) => checkFrame(firstNumber + index));
-          frames = (await Promise.all(checks)).filter(Boolean);
-
-          if (!frames.length) {
-            message.textContent = "Nenhuma imagem encontrada. Confira se imagem.0000.png, imagem.0001.png etc. estão na raiz publicada do GitHub Pages.";
-            return;
-          }
-
-          message.hidden = true;
-          seek.max = String(frames.length - 1);
-          [previousButton, playButton, nextButton, seek, speed].forEach(control => { control.disabled = false; });
-          showFrame(0);
-        } catch (error) {
-          message.textContent = "Não foi possível carregar a sequência de imagens. Recarregue a página e tente novamente.";
-          console.error(error);
+        const checks = [];
+        for (let n = firstNumber; n < lastNumber; n++) {
+          checks.push(checkFrame(n));
         }
+
+        const results = await Promise.all(checks);
+        frames = results.filter(Boolean);
+
+        if (!frames.length) {
+          message.textContent = "Nenhuma imagem encontrada. Verifique se os arquivos imagem.0000.png, imagem.0001.png etc. estão na raiz do GitHub Pages.";
+          return;
+        }
+
+        message.hidden = true;
+        seek.max = String(frames.length - 1);
+        [previousButton, playButton, nextButton, seek, speed].forEach(control => control.disabled = false);
+
+        showFrame(0);
       }
 
       previousButton.addEventListener("click", () => showFrame(current - 1));
-      nextButton.addEventListener("click", () => showFrame(current + 1));
-      playButton.addEventListener("click", () => timer === null ? start() : stop());
-      seek.addEventListener("input", () => showFrame(Number(seek.value)));
-      speed.addEventListener("change", () => {
-        if (timer !== null) { stop(); start(); }
-      });
-      image.addEventListener("error", () => {
-        stop();
-        image.hidden = true;
-        message.hidden = false;
-        message.textContent = "Não foi possível exibir este PNG. Confirme se o arquivo ainda está publicado.";
-      });
-
-      initialize();
-    })();
-  </script>
-</body>
-</html>
+      nextButton.addEvent*
