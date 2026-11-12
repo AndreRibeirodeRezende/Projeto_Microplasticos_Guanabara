@@ -3,109 +3,299 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Animação quadro a quadro da simulação hidrodinâmica da barreira de bolhas.">
-  <title>Animação hidrodinâmica — Barreira de Bolhas</title>
+  <meta name="description" content="Animação da simulação hidrodinâmica da barreira de bolhas.">
+  <title>Simulação hidrodinâmica — Barreira de Bolhas</title>
+
   <style>
-    :root { color-scheme: dark; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; background: #101923; color: #eef6fb; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; }
-    header { padding: 18px 22px 10px; }
-    h1 { margin: 0; font-size: clamp(1.2rem, 3vw, 1.8rem); }
-    header p { margin: 6px 0 0; color: #b7cbd7; }
-    main { flex: 1; display: grid; place-items: center; padding: 16px 22px; }
-    .viewer { width: min(1200px, 100%); }
-    .frame-wrap { min-height: 250px; display: grid; place-items: center; background: #5e5b59; border: 1px solid #385366; border-radius: 10px; overflow: hidden; }
-    #frame { display: block; max-width: 100%; max-height: 68vh; object-fit: contain; }
-    #message { padding: 24px; color: #ffcc80; text-align: center; }
-    .controls { display: grid; grid-template-columns: auto minmax(100px, 1fr) auto auto; align-items: center; gap: 12px; margin-top: 12px; }
-    button, select, input { font: inherit; }
-    button, select { color: #eef6fb; background: #15384d; border: 1px solid #4fc3f7; border-radius: 6px; padding: 8px 12px; }
-    button { cursor: pointer; }
-    button:hover { background: #205775; }
-    input[type="range"] { width: 100%; accent-color: #4fc3f7; }
-    #status { color: #c6d6df; font-size: .9rem; text-align: right; }
-    footer { padding: 0 22px 18px; color: #a9bac5; font-size: .85rem; }
-    @media (max-width: 620px) { .controls { grid-template-columns: auto 1fr; } #status { text-align: left; } }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: #101923;
+      color: #eef6fb;
+      font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+
+    header {
+      padding: 18px 22px 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.2rem, 3vw, 1.8rem);
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: #b7cbd7;
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      padding: 16px 22px;
+    }
+
+    .visualizador {
+      width: min(1200px, 100%);
+    }
+
+    .area-imagem {
+      min-height: 250px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+      border: 1px solid #385366;
+      border-radius: 10px;
+      background: #5e5b59;
+    }
+
+    #quadro {
+      display: block;
+      max-width: 100%;
+      max-height: 70vh;
+      object-fit: contain;
+    }
+
+    #mensagem {
+      padding: 24px;
+      color: #ffcc80;
+      text-align: center;
+    }
+
+    .controles {
+      display: grid;
+      grid-template-columns: auto minmax(100px, 1fr) auto auto;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    button,
+    select {
+      padding: 8px 12px;
+      border: 1px solid #4fc3f7;
+      border-radius: 6px;
+      background: #15384d;
+      color: #eef6fb;
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:hover:not(:disabled) {
+      background: #205775;
+    }
+
+    button:disabled,
+    select:disabled,
+    input:disabled {
+      cursor: not-allowed;
+      opacity: 0.6;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: #4fc3f7;
+    }
+
+    #contador {
+      color: #c6d6df;
+      font-size: 0.9rem;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    footer {
+      padding: 0 22px 18px;
+      color: #a9bac5;
+      font-size: 0.85rem;
+    }
+
+    @media (max-width: 650px) {
+      .controles {
+        grid-template-columns: auto 1fr;
+      }
+
+      #contador {
+        text-align: left;
+      }
+    }
   </style>
 </head>
+
 <body>
   <header>
     <h1>Simulação hidrodinâmica — Barreira de Bolhas</h1>
-    <p>Reprodução quadro a quadro das imagens exportadas do ParaView.</p>
+    <p>Use os controles para reproduzir, pausar ou selecionar um quadro da sequência.</p>
   </header>
+
   <main>
-    <section class="viewer" aria-label="Animação da simulação">
-      <div class="frame-wrap">
-        <img id="frame" alt="Quadro da simulação hidrodinâmica" hidden>
-        <div id="message" role="status">Carregando quadro 1 de 43…</div>
+    <section class="visualizador" aria-label="Animação da simulação hidrodinâmica">
+      <div class="area-imagem">
+        <img id="quadro" alt="Quadro da simulação hidrodinâmica" hidden>
+        <div id="mensagem" role="status" aria-live="polite">
+          Procurando as imagens da sequência…
+        </div>
       </div>
-      <div class="controls">
-        <button id="play" type="button" aria-pressed="false">▶ Reproduzir</button>
-        <input id="seek" type="range" min="0" max="42" step="1" value="0" aria-label="Selecionar quadro">
-        <label for="speed">Velocidade</label>
-        <select id="speed" aria-label="Velocidade da animação">
-          <option value="200">5 fps</option>
-          <option value="100" selected>10 fps</option>
-          <option value="50">20 fps</option>
+
+      <div class="controles">
+        <button id="botaoReproduzir" type="button" disabled>
+          ▶ Reproduzir
+        </button>
+
+        <input
+          id="controleQuadro"
+          type="range"
+          min="0"
+          max="0"
+          value="0"
+          aria-label="Selecionar quadro da animação"
+          disabled
+        >
+
+        <label for="velocidade">Velocidade</label>
+
+        <select id="velocidade" aria-label="Velocidade da animação" disabled>
+          <option value="200">5 quadros/s</option>
+          <option value="100" selected>10 quadros/s</option>
+          <option value="50">20 quadros/s</option>
         </select>
-        <div id="status" aria-live="polite">Quadro 1 / 43</div>
+
+        <span id="contador" aria-live="polite"></span>
       </div>
     </section>
   </main>
-  <footer>Os quadros devem estar em <code>animacao_pngs/</code> e seguir o padrão <code>simulacao.0000.png</code> a <code>simulacao.0042.png</code>.</footer>
+
+  <footer>
+    Os arquivos PNG precisam estar na raiz do repositório e seguir o padrão
+    <code>simulacao.0000.png</code>, <code>simulacao.0001.png</code> e assim por diante,
+    sem números faltando na sequência.
+  </footer>
+
   <script>
     (() => {
-      const totalFrames = 43;
-      const frame = document.getElementById('frame');
-      const message = document.getElementById('message');
-      const seek = document.getElementById('seek');
-      const play = document.getElementById('play');
-      const speed = document.getElementById('speed');
-      const status = document.getElementById('status');
-      let current = 0;
-      let timer = null;
+      const imagem = document.getElementById("quadro");
+      const mensagem = document.getElementById("mensagem");
+      const botao = document.getElementById("botaoReproduzir");
+      const controle = document.getElementById("controleQuadro");
+      const velocidade = document.getElementById("velocidade");
+      const contador = document.getElementById("contador");
 
-      function frameUrl(index) {
-        return `animacao_pngs/simulacao.${String(index).padStart(4, '0')}.png`;
+      const quadros = [];
+      let quadroAtual = 0;
+      let temporizador = null;
+      let buscaTerminada = false;
+
+      // Os PNGs são procurados na raiz, ao lado deste arquivo HTML.
+      function caminhoDoQuadro(numero) {
+        const numeroFormatado = String(numero).padStart(4, "0");
+        return `./simulacao.${numeroFormatado}.png`;
       }
 
-      function showFrame(index) {
-        current = (index + totalFrames) % totalFrames;
-        seek.value = current;
-        status.textContent = `Quadro ${current + 1} / ${totalFrames}`;
-        message.textContent = `Carregando quadro ${current + 1} de ${totalFrames}…`;
-        message.hidden = false;
-        frame.hidden = true;
-        frame.onload = () => { frame.hidden = false; message.hidden = true; };
-        frame.onerror = () => {
-          frame.hidden = true;
-          message.hidden = false;
-          message.textContent = `Não foi possível carregar ${frameUrl(current)}. Confira se os 43 PNGs estão na pasta animacao_pngs com os nomes indicados.`;
+      function exibirQuadro(numero) {
+        if (quadros.length === 0) return;
+
+        quadroAtual = numero;
+        imagem.src = quadros[quadroAtual];
+        controle.value = String(quadroAtual);
+        contador.textContent = `Quadro ${quadroAtual + 1} / ${quadros.length}`;
+      }
+
+      function pararAnimacao() {
+        if (temporizador !== null) {
+          window.clearInterval(temporizador);
+          temporizador = null;
+        }
+
+        botao.textContent = "▶ Reproduzir";
+        botao.setAttribute("aria-pressed", "false");
+      }
+
+      function iniciarAnimacao() {
+        if (quadros.length === 0) return;
+
+        mensagem.hidden = true;
+        imagem.hidden = false;
+        controle.max = String(quadros.length - 1);
+
+        botao.disabled = false;
+        controle.disabled = false;
+        velocidade.disabled = false;
+
+        exibirQuadro(0);
+      }
+
+      // Testa os arquivos em ordem e encerra no primeiro número ausente.
+      function procurarProximoQuadro(numero) {
+        if (buscaTerminada) return;
+
+        const teste = new Image();
+        teste.onload = () => {
+          quadros.push(caminhoDoQuadro(numero));
+          procurarProximoQuadro(numero + 1);
         };
-        frame.src = frameUrl(current);
+
+        teste.onerror = () => {
+          buscaTerminada = true;
+
+          if (quadros.length === 0) {
+            mensagem.textContent =
+              "Não encontrei simulacao.0000.png na raiz do repositório. " +
+              "Confira o nome do arquivo e se ele foi enviado ao GitHub.";
+            return;
+          }
+
+          iniciarAnimacao();
+        };
+
+        teste.src = caminhoDoQuadro(numero);
       }
 
-      function stop() {
-        if (timer !== null) window.clearInterval(timer);
-        timer = null;
-        play.textContent = '▶ Reproduzir';
-        play.setAttribute('aria-pressed', 'false');
-      }
+      botao.addEventListener("click", () => {
+        if (temporizador !== null) {
+          pararAnimacao();
+          return;
+        }
 
-      play.addEventListener('click', () => {
-        if (timer !== null) { stop(); return; }
-        play.textContent = '❚❚ Pausar';
-        play.setAttribute('aria-pressed', 'true');
-        timer = window.setInterval(() => showFrame(current + 1), Number(speed.value));
+        botao.textContent = "❚❚ Pausar";
+        botao.setAttribute("aria-pressed", "true");
+
+        temporizador = window.setInterval(() => {
+          const proximo = (quadroAtual + 1) % quadros.length;
+          exibirQuadro(proximo);
+        }, Number(velocidade.value));
       });
-      seek.addEventListener('input', () => showFrame(Number(seek.value)));
-      speed.addEventListener('change', () => {
-        if (timer !== null) {
-          stop();
-          play.click();
+
+      controle.addEventListener("input", () => {
+        exibirQuadro(Number(controle.value));
+      });
+
+      velocidade.addEventListener("change", () => {
+        if (temporizador !== null) {
+          pararAnimacao();
+          botao.click();
         }
       });
-      showFrame(0);
+
+      imagem.addEventListener("error", () => {
+        pararAnimacao();
+        imagem.hidden = true;
+        mensagem.hidden = false;
+        mensagem.textContent =
+          "Não foi possível exibir este quadro. Confira se os PNGs estão na raiz " +
+          "e se os nomes seguem a sequência simulacao.0000.png, simulacao.0001.png…";
+      });
+
+      procurarProximoQuadro(0);
     })();
   </script>
 </body>
